@@ -1,5 +1,5 @@
 service_name = "example-service"
-version = "0.1"
+version = "0.1.0"
 org = "assets-atlas"
 
 go_test:
