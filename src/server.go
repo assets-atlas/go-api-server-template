@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 )
@@ -34,8 +35,20 @@ func DefaultRoute() http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		if err := json.NewEncoder(w).Encode(resp); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
+			log.Error(err)
 			return
 		}
+
+		log.WithFields(
+			log.Fields{
+				"request_data": log.Fields{
+					"host":           r.Host,
+					"endpoint":       r.RequestURI,
+					"remote_address": r.RemoteAddr,
+					"method":         r.Method,
+				},
+			},
+		).Debug()
 
 	}
 

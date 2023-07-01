@@ -1,7 +1,10 @@
 package main
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
+	"strings"
+
+	//"log"
 	"net/http"
 	"os"
 )
@@ -23,9 +26,51 @@ func main() {
 		httpPort = "2000"
 	}
 
-	log.Printf("starting %s\nversion: %s\nhttp port: %s", serviceName, version, httpPort)
+	logLevel := os.Getenv("LOG_LEVEL")
+	switch strings.ToLower(logLevel) {
+	case "info":
+		log.SetLevel(log.InfoLevel)
+	case "warn":
+		log.SetLevel(log.WarnLevel)
+	case "error":
+		log.SetLevel(log.ErrorLevel)
+	case "fatal":
+		log.SetLevel(log.FatalLevel)
+	case "panic":
+		log.SetLevel(log.PanicLevel)
+	case "trace":
+		log.SetLevel(log.TraceLevel)
+	case "debug":
+		log.SetLevel(log.DebugLevel)
+	default:
+		log.SetLevel(log.InfoLevel)
+
+	}
+
+	log.SetFormatter(&log.JSONFormatter{
+		PrettyPrint: true,
+	})
+
+	log.Printf("server starting")
+
+	hostName, err := os.Hostname()
+	if err != nil {
+		log.Warn(err)
+	}
+
+	log.WithFields(
+		log.Fields{
+			"server_startup_info": log.Fields{
+				"service_name": serviceName,
+				"http_port":    httpPort,
+				"version":      version,
+				"log_level":    logLevel,
+				"hostname":     hostName,
+			}},
+	).Info("server started...")
 
 	router := NewRouter()
 
 	log.Fatal(http.ListenAndServe(`:`+httpPort, router))
+
 }
