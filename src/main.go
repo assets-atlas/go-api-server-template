@@ -2,7 +2,9 @@ package main
 
 import (
 	log "github.com/sirupsen/logrus"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	//"log"
 	"net/http"
@@ -73,4 +75,23 @@ func main() {
 
 	log.Fatal(http.ListenAndServe(`:`+httpPort, router))
 
+	//gracefulShutdown()
+
+}
+
+func gracefulShutdown() {
+	// Create a channel to receive the termination signal
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGTERM)
+
+	// Wait for the termination signal
+	<-signalChan
+
+	// Perform any necessary cleanup or shutdown tasks here
+	// For example, gracefully stop the server
+
+	log.Println("Server shutting down...")
+	// Perform any cleanup or shutdown tasks here
+
+	os.Exit(0)
 }
