@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -54,9 +55,11 @@ func DefaultRoute() http.HandlerFunc {
 
 }
 
-func NewRouter() *mux.Router {
+func NewRouter(db *sql.DB, vc *vault.Client, vClient vaultidentity.VaultClientWrapper) *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/", DefaultRoute()).Methods("GET")
+
+	apiRouter := r.PathPrefix("/v1").Subrouter()
 
 	return r
 }

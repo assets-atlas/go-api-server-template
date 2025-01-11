@@ -1,10 +1,12 @@
 package main
 
 import (
+	"database/sql"
 	log "github.com/sirupsen/logrus"
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	//"log"
 	"net/http"
@@ -71,7 +73,80 @@ func main() {
 			}},
 	).Info("server started...")
 
-	router := NewRouter()
+	dbName := os.Getenv("DATABASE_NAME")
+	if dbName == "" {
+		log.Fatal("DATABASE_NAME environment variable must be set")
+	}
+
+	dbUser := os.Getenv("DATABASE_USER")
+	if dbName == "" {
+		log.Fatal("DATABASE_USER environment variable must be set")
+	}
+
+	dbPassword := os.Getenv("DATABASE_PASSWORD")
+	if dbName == "" {
+		log.Fatal("DATABASE_PASSWORD environment variable must be set")
+	}
+
+	dbHost := os.Getenv("DATABASE_HOST")
+	if dbName == "" {
+		log.Fatal("DATABASE_HOST environment variable must be set")
+	}
+
+	dbPort := os.Getenv("DATABASE_PORT")
+	if dbName == "" {
+		log.Fatal("DATABASE_PORT environment variable must be set")
+	}
+
+	dbSslMode := os.Getenv("DATABASE_SSL_MODE")
+	if dbName == "" {
+		log.Info("DATABASE_SSL_MODE not set. defaulting to require")
+		dbSslMode = "require"
+	}
+
+	connStr := "user=" + dbUser + " password=" + dbPassword + " host=" + dbHost + " port=" + dbPort + " dbname=" + dbName + " sslmode=" + dbSslMode + " sslrootcert=/Users/rbarnes/Downloads/ca-certificate.crt"
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+
+		}
+	}(db)
+
+	db.SetMaxOpenConns(100)
+	db.SetMaxIdleConns(10)
+	db.SetConnMaxLifetime(10 * time.Minute)
+
+	err = db.Ping()
+	if err != nil {
+		log.Errorf("Error establishing database connection: %s", err)
+		return
+	}
+
+	log.Println("Database connection established")
+
+	vaultAddr := os.Getenv("VAULT_ADDR")
+	if vaultAddr == "" {
+		log.Fatal("VAULT_ADDR has not been set")
+	}
+
+	vaultToken := os.Getenv("VAULT_TOKEN")
+	if vaultToken == "" {
+		log.Fatal("VAULT_TOKEN has not been set")
+	}
+
+	keyName := os.Getenv("VAULT_TRANSIT_KEY_NAME")
+	if keyName == "" {
+		log.Fatal("VAULT_TRANSIT_KEY_NAME not set")
+	}
+
+	vc := vlt.NewClient(vaultAddr, string(vaultToken))
+	vcw := vaultidentity.VaultClientWrapper{VC: &vc}
+
+	router := NewRouter(db, &vc, vcw)
 
 	log.Fatal(http.ListenAndServe(`:`+httpPort, router))
 
