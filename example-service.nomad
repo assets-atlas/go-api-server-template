@@ -22,7 +22,15 @@ job "example" {
         change_mode = "restart"
         data        = <<EOF
           {{- with nomadVar "nomad/jobs/example/example/example" -}}
-          EXAMPLE_ENV_VAR = {{ .EXAMPLE_ENV_VAR }}
+          DATABASE_NAME = {{ .DATABASE_NAME }}
+          DATABASE_USER  = {{ .DATABASE_USER }}
+          DATABASE_PASSWORD = {{ .DATABASE_PASSWORD }}
+          DATABASE_HOST = {{ .DATABASE_HOST }}
+          DATABASE_PORT = {{ .DATABASE_PORT }}
+          DATABASE_SSL_MODE = {{ .DATABASE_SSL_MODE }}
+          VAULT_ADDR = {{ .VAULT_ADDR }}
+          VAULT_TOKEN = {{ .VAULT_TOKEN }}
+          VAULT_TRANSIT_KEY_NAME = {{ .VAULT_TRANSIT_KEY_NAME }}
           {{- end -}}
           EOF
       }
